@@ -17,6 +17,7 @@ import android.view.View;
  * CircularTabIndicator
  * <p>
  * Create tab indicators which are update with currently selected tab in a view pager.
+ * </p>
  */
 public class CircularTabIndicator extends View {
     private static final int[] SELECTED_STATES = {android.R.attr.state_selected};
@@ -40,6 +41,8 @@ public class CircularTabIndicator extends View {
             com.mondo.circulartabindicator.R.color
                     .indicator_default_not_selected_color);
 
+    private int mLastPosition;
+
     public CircularTabIndicator(Context context) {
         super(context);
         init(null);
@@ -59,6 +62,7 @@ public class CircularTabIndicator extends View {
         if (viewPager != null) {
             mViewPager = viewPager;
             mCount = viewPager.getAdapter().getCount();
+            mLastPosition = mViewPager.getCurrentItem();
             mViewPager.addOnPageChangeListener(new OnPageChangeListener());
             setUp();
         }
@@ -88,6 +92,13 @@ public class CircularTabIndicator extends View {
     public void setColorsResId(int selectedColorResId, int notSelectedColor) {
         mSelectedColor = ContextCompat.getColor(getContext(), selectedColorResId);
         mNotSelectedColor = ContextCompat.getColor(getContext(), notSelectedColor);
+    }
+
+    public void setSelected(int position) {
+        mIndicators[mLastPosition].setState(NOT_SELECTED_STATES);
+        mIndicators[position].setState(SELECTED_STATES);
+        mLastPosition = position;
+        invalidate();
     }
 
     private void init(AttributeSet attrs) {
@@ -199,15 +210,10 @@ public class CircularTabIndicator extends View {
     }
 
     private class OnPageChangeListener extends ViewPager.SimpleOnPageChangeListener {
-        private int mLastPosition = mViewPager.getCurrentItem();
-
         @Override
         public void onPageSelected(int position) {
             super.onPageSelected(position);
-            mIndicators[mLastPosition].setState(NOT_SELECTED_STATES);
-            mIndicators[position].setState(SELECTED_STATES);
-            mLastPosition = position;
-            invalidate();
+            setSelected(position);
         }
     }
 }
