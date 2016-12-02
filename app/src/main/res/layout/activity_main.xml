@@ -18,8 +18,8 @@
         android:layout_alignParentBottom="true"
         android:layout_centerInParent="true"
         android:layout_marginBottom="16dp"
-        app:indicatorNotSelectedColor="@color/not_selected_color"
-        app:indicatorSelectedColor="@color/selected_color"
+        app:cti_not_selected_color="@color/not_selected_color"
+        app:cti_selected_color="@color/selected_color"
         />
 
 </RelativeLayout>

@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <declare-styleable name="CircularTabIndicator">
-        <attr name="indicatorSize" format="dimension"/>
-        <attr name="indicatorMargin" format="dimension"/>
-        <attr name="indicatorSelectedColor" format="color"/>
-        <attr name="indicatorNotSelectedColor" format="color"/>
+        <attr name="cti_tab_size" format="dimension"/>
+        <attr name="cti_tab_margin" format="dimension"/>
+        <attr name="cti_selected_color" format="color"/>
+        <attr name="cti_not_selected_color" format="color"/>
+        <attr name="cti_tabs_count" format="integer"/>
     </declare-styleable>
 </resources>

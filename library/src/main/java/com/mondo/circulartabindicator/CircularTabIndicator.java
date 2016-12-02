@@ -23,6 +23,8 @@ import android.view.animation.Interpolator;
  * </p>
  */
 public class CircularTabIndicator extends View {
+    private static final long ANIMATION_DURATION = 500L;
+
     private final String TAG = getClass().getSimpleName();
 
     private ViewPager mViewPager;
@@ -61,87 +63,8 @@ public class CircularTabIndicator extends View {
         init(attrs);
     }
 
-    public void setUpWithViewPager(ViewPager viewPager) {
-        if (viewPager != null) {
-            mViewPager = viewPager;
-            mCount = viewPager.getAdapter().getCount();
-            mLastPosition = mViewPager.getCurrentItem();
-            mViewPager.addOnPageChangeListener(new OnPageChangeListener());
-            setUp();
-        }
-    }
-
-    public void setIndicatorSize(int size) {
-        mIndicatorSize = size;
-    }
-
-    public void setIndicatorSizeResId(int sizeResId) {
-        mIndicatorSize = getContext().getResources().getDimensionPixelSize(sizeResId);
-    }
-
-    public void setIndicatorMargin(int margin) {
-        mIndicatorMargin = margin;
-    }
-
-    public void setIndicatorMarginResId(int marginResId) {
-        mIndicatorMargin = getContext().getResources().getDimensionPixelSize(marginResId);
-    }
-
-    public void setColors(int selectedColor, int notSelectedColor) {
-        mSelectedColor = selectedColor;
-        mNotSelectedColor = notSelectedColor;
-    }
-
-    public void setColorsResId(int selectedColorResId, int notSelectedColor) {
-        mSelectedColor = ContextCompat.getColor(getContext(), selectedColorResId);
-        mNotSelectedColor = ContextCompat.getColor(getContext(), notSelectedColor);
-    }
-
-    public void setSelected(int position) {
-        setSelected(position, true);
-    }
-
-    public void setSelected(int position, boolean smooth) {
-        if (position > -1 && position < mIndicators.length) {
-            Drawable oldDrawable = mIndicators[mLastPosition];
-            Drawable newDrawable = mIndicators[position];
-
-            mLastPosition = position;
-
-            if (smooth) {
-                Rect oldBounds = oldDrawable.getBounds();
-                Rect newBounds = newDrawable.getBounds();
-
-                mSelectedDrawable.setBounds(oldBounds);
-                int oldLeft;
-                int newLeft = newBounds.left;
-                if (mAnimator != null && mAnimator.isRunning()) {
-                    oldLeft = (int) mAnimator.getAnimatedValue();
-                    mAnimator.cancel();
-                } else {
-                    oldLeft = oldBounds.left;
-                }
-                mAnimator = ValueAnimator.ofInt(oldLeft, newLeft);
-                mAnimator.setDuration(500);
-                mAnimator.setInterpolator(mInterpolator);
-                mAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-                    @Override
-                    public void onAnimationUpdate(ValueAnimator valueAnimator) {
-                        Rect bounds = mSelectedDrawable.getBounds();
-                        bounds.left = (int) valueAnimator.getAnimatedValue();
-                        mSelectedDrawable.setBounds(bounds);
-                        postInvalidate();
-                    }
-                });
-                mAnimator.start();
-            } else {
-                mSelectedDrawable.setBounds(newDrawable.getBounds());
-                postInvalidate();
-            }
-        }
-    }
-
     private void init(AttributeSet attrs) {
+        Log.d(TAG, "init");
         Log.d(TAG, "attrs == null ? " + (attrs == null));
         if (attrs != null) {
             TypedArray array = getContext().getTheme().obtainStyledAttributes(attrs, com.mondo
@@ -149,27 +72,28 @@ public class CircularTabIndicator extends View {
                     .CircularTabIndicator, 0, 0);
             try {
                 mIndicatorSize = array.getDimensionPixelSize(
-                        com.mondo.circulartabindicator.R.styleable
-                                .CircularTabIndicator_indicatorSize,
+                        R.styleable
+                                .CircularTabIndicator_cti_tab_size,
                         getContext().getResources().getDimensionPixelSize(
                                 com.mondo.circulartabindicator.R.dimen
                                         .indicator_default_size));
 
                 mIndicatorMargin = array.getDimensionPixelSize(
-                        com.mondo.circulartabindicator.R.styleable
-                                .CircularTabIndicator_indicatorMargin,
+                        R.styleable
+                                .CircularTabIndicator_cti_tab_margin,
                         getContext().getResources().getDimensionPixelSize(
                                 com.mondo.circulartabindicator.R.dimen
                                         .indicator_default_margin));
 
-                mSelectedColor = array.getColor(com.mondo.circulartabindicator.R.styleable
-                                .CircularTabIndicator_indicatorSelectedColor,
+                mSelectedColor = array.getColor(R.styleable
+                                .CircularTabIndicator_cti_selected_color,
                         ContextCompat.getColor(getContext(), com.mondo.circulartabindicator.R.color
                                 .indicator_default_selected_color));
-                mNotSelectedColor = array.getColor(com.mondo.circulartabindicator.R.styleable
-                                .CircularTabIndicator_indicatorNotSelectedColor,
+                mNotSelectedColor = array.getColor(R.styleable
+                                .CircularTabIndicator_cti_not_selected_color,
                         ContextCompat.getColor(getContext(), com.mondo.circulartabindicator.R.color
                                 .indicator_default_not_selected_color));
+                mCount = array.getInt(R.styleable.CircularTabIndicator_cti_tabs_count, 0);
             } finally {
                 array.recycle();
             }
@@ -224,6 +148,12 @@ public class CircularTabIndicator extends View {
     }
 
     @Override
+    protected void onFinishInflate() {
+        super.onFinishInflate();
+        setUp();
+    }
+
+    @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         if (mIndicators != null) {
             int measuredHeight = mIndicatorSize + mIndicatorMargin;
@@ -237,7 +167,6 @@ public class CircularTabIndicator extends View {
     }
 
     @Override
-
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
         if (mIndicators != null) {
@@ -245,6 +174,102 @@ public class CircularTabIndicator extends View {
                 drawable.draw(canvas);
             }
             mSelectedDrawable.draw(canvas);
+        }
+    }
+
+    public void setUpWithViewPager(ViewPager viewPager) {
+        if (viewPager != null) {
+            mViewPager = viewPager;
+            mCount = viewPager.getAdapter().getCount();
+            mLastPosition = mViewPager.getCurrentItem();
+            mViewPager.addOnPageChangeListener(new OnPageChangeListener());
+            setUp();
+        }
+    }
+
+    public void setCount(int count) {
+        mCount = count;
+    }
+
+    public int getCount() {
+        return mCount;
+    }
+
+    public void setIndicatorSize(int size) {
+        mIndicatorSize = size;
+    }
+
+    public int getIndicatorSize() {
+        return mIndicatorSize;
+    }
+
+    public void setIndicatorSizeResId(int sizeResId) {
+        mIndicatorSize = getContext().getResources().getDimensionPixelSize(sizeResId);
+    }
+
+    public void setIndicatorMargin(int margin) {
+        mIndicatorMargin = margin;
+    }
+
+    public int getIndicatorMargin() {
+        return mIndicatorMargin;
+    }
+
+    public void setIndicatorMarginResId(int marginResId) {
+        mIndicatorMargin = getContext().getResources().getDimensionPixelSize(marginResId);
+    }
+
+    public void setColors(int selectedColor, int notSelectedColor) {
+        mSelectedColor = selectedColor;
+        mNotSelectedColor = notSelectedColor;
+    }
+
+    public void setColorsResId(int selectedColorResId, int notSelectedColor) {
+        mSelectedColor = ContextCompat.getColor(getContext(), selectedColorResId);
+        mNotSelectedColor = ContextCompat.getColor(getContext(), notSelectedColor);
+    }
+
+    public void setSelected(int position) {
+        setSelected(position, true);
+    }
+
+    public void setSelected(int position, boolean smooth) {
+        if (position > -1 && position < mIndicators.length) {
+            Drawable oldDrawable = mIndicators[mLastPosition];
+            Drawable newDrawable = mIndicators[position];
+
+            mLastPosition = position;
+
+            if (smooth) {
+                Rect oldBounds = oldDrawable.getBounds();
+                Rect newBounds = newDrawable.getBounds();
+
+                mSelectedDrawable.setBounds(oldBounds);
+                int oldLeft;
+                int newLeft = newBounds.left;
+                if (mAnimator != null && mAnimator.isRunning()) {
+                    oldLeft = (int) mAnimator.getAnimatedValue();
+                    mAnimator.cancel();
+                } else {
+                    oldLeft = oldBounds.left;
+                }
+                mAnimator = ValueAnimator.ofInt(oldLeft, newLeft);
+                mAnimator.setDuration(ANIMATION_DURATION);
+                mAnimator.setInterpolator(mInterpolator);
+                mAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                    @Override
+                    public void onAnimationUpdate(ValueAnimator valueAnimator) {
+                        Rect bounds = mSelectedDrawable.getBounds();
+                        bounds.left = (int) valueAnimator.getAnimatedValue();
+                        mSelectedDrawable.setBounds(bounds);
+                        postInvalidate();
+                    }
+                });
+                mAnimator.start();
+            } else {
+                mSelectedDrawable.setBounds(newDrawable.getBounds());
+                postInvalidate();
+            }
         }
     }
 
