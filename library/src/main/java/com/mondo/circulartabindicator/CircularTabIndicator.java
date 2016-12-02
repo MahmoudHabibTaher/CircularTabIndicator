@@ -1,17 +1,20 @@
 package com.mondo.circulartabindicator;
 
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
+import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.ShapeDrawable;
-import android.graphics.drawable.StateListDrawable;
 import android.graphics.drawable.shapes.OvalShape;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
+import android.view.animation.AccelerateDecelerateInterpolator;
+import android.view.animation.Interpolator;
 
 /**
  * CircularTabIndicator
@@ -20,9 +23,6 @@ import android.view.View;
  * </p>
  */
 public class CircularTabIndicator extends View {
-    private static final int[] SELECTED_STATES = {android.R.attr.state_selected};
-    private static final int[] NOT_SELECTED_STATES = {-android.R.attr.stateNotNeeded};
-
     private final String TAG = getClass().getSimpleName();
 
     private ViewPager mViewPager;
@@ -30,6 +30,9 @@ public class CircularTabIndicator extends View {
     private int mCount;
 
     private Drawable[] mIndicators;
+    private ShapeDrawable mSelectedDrawable;
+    private ValueAnimator mAnimator;
+    private Interpolator mInterpolator = new AccelerateDecelerateInterpolator();
 
     private int mIndicatorSize = 35;
     private int mIndicatorMargin = 5;
@@ -95,10 +98,47 @@ public class CircularTabIndicator extends View {
     }
 
     public void setSelected(int position) {
-        mIndicators[mLastPosition].setState(NOT_SELECTED_STATES);
-        mIndicators[position].setState(SELECTED_STATES);
-        mLastPosition = position;
-        invalidate();
+        setSelected(position, true);
+    }
+
+    public void setSelected(int position, boolean smooth) {
+        if (position > -1 && position < mIndicators.length) {
+            Drawable oldDrawable = mIndicators[mLastPosition];
+            Drawable newDrawable = mIndicators[position];
+
+            mLastPosition = position;
+
+            if (smooth) {
+                Rect oldBounds = oldDrawable.getBounds();
+                Rect newBounds = newDrawable.getBounds();
+
+                mSelectedDrawable.setBounds(oldBounds);
+                int oldLeft;
+                int newLeft = newBounds.left;
+                if (mAnimator != null && mAnimator.isRunning()) {
+                    oldLeft = (int) mAnimator.getAnimatedValue();
+                    mAnimator.cancel();
+                } else {
+                    oldLeft = oldBounds.left;
+                }
+                mAnimator = ValueAnimator.ofInt(oldLeft, newLeft);
+                mAnimator.setDuration(500);
+                mAnimator.setInterpolator(mInterpolator);
+                mAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                    @Override
+                    public void onAnimationUpdate(ValueAnimator valueAnimator) {
+                        Rect bounds = mSelectedDrawable.getBounds();
+                        bounds.left = (int) valueAnimator.getAnimatedValue();
+                        mSelectedDrawable.setBounds(bounds);
+                        postInvalidate();
+                    }
+                });
+                mAnimator.start();
+            } else {
+                mSelectedDrawable.setBounds(newDrawable.getBounds());
+                postInvalidate();
+            }
+        }
     }
 
     private void init(AttributeSet attrs) {
@@ -154,31 +194,29 @@ public class CircularTabIndicator extends View {
 
         int leftMargin = mIndicatorMargin / 2;
 
+        mSelectedDrawable = new ShapeDrawable(new OvalShape());
+        mSelectedDrawable.setIntrinsicWidth(mIndicatorSize);
+        mSelectedDrawable.setIntrinsicHeight(mIndicatorSize);
+        mSelectedDrawable.setBounds(leftMargin, mIndicatorMargin / 2, mIndicatorSize + leftMargin,
+                mIndicatorMargin / 2 + mIndicatorSize);
+        mSelectedDrawable.getPaint().setColor(mSelectedColor);
+
         for (int i = 0; i < mIndicators.length; i++) {
-            ShapeDrawable selectedDrawable = new ShapeDrawable(new OvalShape());
-            selectedDrawable.setIntrinsicWidth(mIndicatorSize);
-            selectedDrawable.setIntrinsicHeight(mIndicatorSize);
-            selectedDrawable.getPaint().setColor(mSelectedColor);
-
-            ShapeDrawable notSelectedDrawable = new ShapeDrawable(new OvalShape());
-            selectedDrawable.setIntrinsicWidth(mIndicatorSize);
-            selectedDrawable.setIntrinsicHeight(mIndicatorSize);
-            notSelectedDrawable.getPaint().setColor(mNotSelectedColor);
-
-            StateListDrawable stateListDrawable = new StateListDrawable();
-            stateListDrawable.addState(SELECTED_STATES, selectedDrawable);
-            stateListDrawable.addState(NOT_SELECTED_STATES, notSelectedDrawable);
-
             int left = leftMargin;
             int right = mIndicatorSize + left;
             int top = mIndicatorMargin / 2;
             int bottom = mIndicatorMargin / 2 + mIndicatorSize;
 
-            stateListDrawable.setBounds(left, top, right, bottom);
-            if (mViewPager.getCurrentItem() == i) {
-                stateListDrawable.setState(SELECTED_STATES);
+            ShapeDrawable indicator = new ShapeDrawable(new OvalShape());
+            indicator.setIntrinsicWidth(mIndicatorSize);
+            indicator.setIntrinsicHeight(mIndicatorSize);
+            indicator.getPaint().setColor(mNotSelectedColor);
+            indicator.setBounds(left, top, right, bottom);
+
+            if (mLastPosition == i) {
+                mSelectedDrawable.setBounds(indicator.getBounds());
             }
-            mIndicators[i] = stateListDrawable;
+            mIndicators[i] = indicator;
 
             leftMargin += mIndicatorSize + mIndicatorMargin;
         }
@@ -206,6 +244,7 @@ public class CircularTabIndicator extends View {
             for (Drawable drawable : mIndicators) {
                 drawable.draw(canvas);
             }
+            mSelectedDrawable.draw(canvas);
         }
     }
 
