@@ -14,7 +14,9 @@ import android.util.Log;
 import android.view.View;
 
 /**
- * Created by mahmoud on 8/16/15.
+ * CircularTabIndicator
+ * <p>
+ * Create tab indicators which are update with currently selected tab in a view pager.
  */
 public class CircularTabIndicator extends View {
     private static final int[] SELECTED_STATES = {android.R.attr.state_selected};
@@ -84,8 +86,8 @@ public class CircularTabIndicator extends View {
     }
 
     public void setColorsResId(int selectedColorResId, int notSelectedColor) {
-        mSelectedColor = getContext().getResources().getColor(selectedColorResId);
-        mNotSelectedColor = getContext().getResources().getColor(notSelectedColor);
+        mSelectedColor = ContextCompat.getColor(getContext(), selectedColorResId);
+        mNotSelectedColor = ContextCompat.getColor(getContext(), notSelectedColor);
     }
 
     private void init(AttributeSet attrs) {
