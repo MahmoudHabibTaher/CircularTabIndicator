@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="CircularTabIndicator">
+        <attr name="indicatorSize" format="dimension"/>
+        <attr name="indicatorMargin" format="dimension"/>
+        <attr name="indicatorSelectedColor" format="color"/>
+        <attr name="indicatorNotSelectedColor" format="color"/>
+    </declare-styleable>
+</resources>
